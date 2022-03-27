@@ -1,17 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
     
-class PathSearch:
+class PathPlanning:
     def __init__(self, algo_select):
         self.algo_select = algo_select
         return
 
-    def do_search(self, all_node, x_start, y_start, x_target, y_target):
+    def do_path_planning(self, all_node, x_start, y_start, x_target, y_target):
         if self.algo_select == 'Astar':
             return self.astar_search(all_node, x_start, y_start, x_target, y_target)
-    
-    def astar_search(self, all_node, x_start, y_start, x_target, y_target):
+        #TODO：other path search method
         
+    def astar_search(self, all_node, x_start, y_start, x_target, y_target):
         plt.scatter(x_start, y_start, color='blue')
         plt.scatter(x_target, y_target, color='blue')
 

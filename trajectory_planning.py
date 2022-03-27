@@ -1,4 +1,4 @@
-from path_search import PathSearch
+from path_planning import PathPlanning
 from node import Node
 import numpy as np
 import math
@@ -10,9 +10,10 @@ class TrajectoryPlanning:
     def do_planning(self, method_selected, x_start, y_start, x_target, y_target, map_max_x, map_max_y):
         map_all_node = self.init_map(map_max_x, map_max_y)
         
-        pathSearch = PathSearch(method_selected)
-        pathSearch.do_search(map_all_node, x_start, y_start, x_target, y_target)
-   
+        pathSearch = PathPlanning(method_selected)
+        pathSearch.do_path_planning(map_all_node, x_start, y_start, x_target, y_target)
+        ##TODO: trajectory generation
+        
     def init_map(self, max_x, max_y):
         all_node = []
         for i in range(0, max_x):
