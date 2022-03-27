@@ -2,7 +2,7 @@
 This repo contains the code for trajectory planning task.
 
 The overall process of the trajectory planning is built in 
-class `TrajectoryPlanning` in `trajector_planning.py`. Run this file to start the method. The starting point, target point and map range can be specified.
+class `TrajectoryPlanning` in [`trajector_planning.py`](链接地址). Run this file to start the method. The starting point, target point and map range can be specified.
 
 First, the map and obstacles are initialized in function `init_map`. Actually, the map should be specified before the trajectory planning module. For simplicity, the map is initialized here.
 
