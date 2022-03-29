@@ -49,7 +49,7 @@ class PathPlanning:
                 idx += 1
                 candidate_g = current_node.g + current_node.get_distance(candidate)
                 candidate_fn = candidate_g + candidate.h
-                if candidate.g is None or candidate.g > candidate_g:
+                if (candidate.g is None) or (candidate.g > candidate_g):
                     candidate.set_parent(current_node)
                     candidate.set_g(current_node)
                     
