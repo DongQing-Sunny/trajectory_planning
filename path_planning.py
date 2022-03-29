@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import queue
     
 class PathPlanning:
     def __init__(self, algo_select):
@@ -20,48 +19,43 @@ class PathPlanning:
             if all_node[i].x == x_start and all_node[i].y == y_start:
                 all_node[i].set_block(0)
                 start_node = all_node[i]
-                start_node.g = 0
             if all_node[i].x == x_target and all_node[i].y == y_target:
                 all_node[i].set_block(0)
                 target_node = all_node[i]
-        
-        for i in range(0, len(all_node)):
-            all_node[i].set_h(target_node)
-           
+
         for i in range(0, len(all_node)):
             if all_node[i].is_block == 1:       
                 plt.scatter(all_node[i].x, all_node[i].y, color='black')    
 
-        # Index as a tie breaker, in case when h and g are both equal
-        idx = 0
-        selected_node = queue.PriorityQueue()
-        selected_node.put(((start_node.g + start_node.h, -start_node.g, idx), start_node))
+        selected_node = [start_node]
         start_node.set_torched()
-        
-        done = False
-        
-        while (not selected_node.empty()) and (not done):
-            current_node = selected_node.get()[-1]
-            current_node.set_torched()
-            for candidate in current_node.neighbors:
-                if candidate.is_block == 1 or candidate.is_torched == 1:
-                    continue 
-                idx += 1
-                candidate_g = current_node.g + current_node.get_distance(candidate)
-                candidate_fn = candidate_g + candidate.h
-                if (candidate.g is None) or (candidate.g > candidate_g):
-                    candidate.set_parent(current_node)
-                    candidate.set_g(current_node)
-                    
-                    if candidate == target_node:
-                        done = True
-                        break
-                    
-                    selected_node.put(((candidate_fn, -candidate.g, idx), candidate))
 
-        if not done:
-            print('No path found!')
-            return
+        while 1:
+            min_fn = 100000
+
+            for this_node in selected_node:
+                for candidate_son in this_node.neighbors:
+                    if candidate_son.is_block == 1 or candidate_son.is_torched == 1:
+                        continue 
+
+                    candidate_son_g = this_node.g + this_node.get_distance(candidate_son)
+                    candidate_son_fn = candidate_son_g + candidate_son.h
+                    if candidate_son_fn < min_fn:
+                        min_son = candidate_son
+                        min_parent = this_node
+                        min_fn = candidate_son_fn 
+            try:
+                min_son
+            except:
+                print('The agent or the target is surrounded by obstacles and there is no viable path.')
+                return
+            selected_node.append(min_son)
+            min_son.set_parent(min_parent)
+            min_son.set_g(min_parent)
+            min_son.set_torched()
+            if min_son == target_node:
+                break
+            
         son_node = target_node
 
         while 1:
