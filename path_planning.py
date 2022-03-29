@@ -20,17 +20,20 @@ class PathPlanning:
             if all_node[i].x == x_start and all_node[i].y == y_start:
                 all_node[i].set_block(0)
                 start_node = all_node[i]
+                start_node.g = 0
             if all_node[i].x == x_target and all_node[i].y == y_target:
                 all_node[i].set_block(0)
                 target_node = all_node[i]
-
+        
+        for i in range(0, len(all_node)):
+            all_node[i].set_h(target_node)
+           
         for i in range(0, len(all_node)):
             if all_node[i].is_block == 1:       
                 plt.scatter(all_node[i].x, all_node[i].y, color='black')    
 
         # Index as a tie breaker, in case when h and g are both equal
         idx = 0
-        
         selected_node = queue.PriorityQueue()
         selected_node.put(((start_node.g + start_node.h, -start_node.g, idx), start_node))
         start_node.set_torched()
@@ -39,21 +42,22 @@ class PathPlanning:
         
         while (not selected_node.empty()) and (not done):
             current_node = selected_node.get()[-1]
+            current_node.set_torched()
             for candidate in current_node.neighbors:
                 if candidate.is_block == 1 or candidate.is_torched == 1:
                     continue 
                 idx += 1
                 candidate_g = current_node.g + current_node.get_distance(candidate)
                 candidate_fn = candidate_g + candidate.h
-
-                candidate.set_parent(current_node)
-                candidate.set_g(current_node)
-                candidate.set_torched()
-                if candidate == target_node:
-                    done = True
-                    break
-                assert isinstance(candidate_fn, float)
-                selected_node.put(((candidate_fn, -candidate.g, idx), candidate))
+                if candidate.g is None or candidate.g > candidate_g:
+                    candidate.set_parent(current_node)
+                    candidate.set_g(current_node)
+                    
+                    if candidate == target_node:
+                        done = True
+                        break
+                    
+                    selected_node.put(((candidate_fn, -candidate.g, idx), candidate))
 
         if not done:
             print('No path found!')

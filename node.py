@@ -4,8 +4,8 @@ class Node:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.h = 0
-        self.g = 0
+        self.h = None
+        self.g = None
         self.parent = None
         self.neighbors = set()
         self.is_torched = 0
