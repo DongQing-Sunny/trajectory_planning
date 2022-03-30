@@ -1,9 +1,9 @@
 import numpy as np
 import math
-from node import Node
+from node import My_Node
 from PIL import Image
 
-class Map:
+class My_Map:
     def __init__(self, map_selected, max_x=0, max_y=0, image=None):
         self.map_selected = map_selected
         self.max_x = max_x
@@ -20,7 +20,7 @@ class Map:
         all_node = []
         for i in range(0, max_x):
             for j in range(0, max_y):
-                all_node.append(Node(i,j))
+                all_node.append(My_Node(i,j))
                     
         for i in range(0, len(all_node)):
             this_node = all_node[i]

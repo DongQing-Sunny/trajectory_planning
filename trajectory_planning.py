@@ -1,5 +1,5 @@
 from path_planning import PathPlanning
-from map import Map
+from map import My_Map
 
     
 class TrajectoryPlanning:
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     map_max_x = 10
     map_max_y = 10 
     
-    map = Map(map_selected, map_max_x, map_max_y)
+    map = My_Map(map_selected, map_max_x, map_max_y)
     #map = Map(map_selected, image='newmap.png')
     map = map.create_map()
     

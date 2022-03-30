@@ -1,6 +1,4 @@
 import queue
-from turtle import done
-from xml.sax.handler import all_properties
 import matplotlib.pyplot as plt
     
 class PathPlanning:
@@ -11,7 +9,7 @@ class PathPlanning:
     def do_path_planning(self, map, x_start, y_start, x_target, y_target):
         
         if self.algo_select == 'Astar':
-            return self.astar_search(map, x_start, y_start, x_target, y_target, data_structure='list')
+            return self.astar_search(map, x_start, y_start, x_target, y_target, data_structure='priority')
         if self.algo_select == 'RRT':
             return self.RRT_sampling(map, x_start, y_start, x_target, y_target)
     
@@ -46,8 +44,6 @@ class PathPlanning:
           
             
     def astar_search(self, all_node, x_start, y_start, x_target, y_target, data_structure='list'):
-        plt.scatter(x_start, y_start, color='blue')
-        plt.scatter(x_target, y_target, color='blue')
 
         for i in range(0, len(all_node)):
             
@@ -57,26 +53,73 @@ class PathPlanning:
             if all_node[i].x == x_target and all_node[i].y == y_target:
                 all_node[i].set_block(0)
                 target_node = all_node[i]
-                
+            #test no path
+            # if (all_node[i].x == 0 and all_node[i].y == 1) or (all_node[i].x == 1 and all_node[i].y == 1) or (all_node[i].x == 1 and all_node[i].y == 0):
+            #     all_node[i].set_block(1)               
             
         for i in range(0, len(all_node)):
             all_node[i].set_h(target_node)
-            
-            if all_node[i].is_block == 1:       
-                plt.scatter(all_node[i].x, all_node[i].y, color='black')    
+
 
         selected_node = [start_node]
         start_node.set_torched()
         start_node.set_g(0)
         selected_node = [start_node]
         open_list = [start_node]
+        idx = 0
         
-        # if data_structure == 'priority':
-        #     open_list = queue.PriorityQueue()
-        #     open_list.put(())
-        #     while (not open_list.empty()):
+        if data_structure == 'priority':
+            
+            open_list = queue.PriorityQueue()
+            open_list.put(((start_node.g + start_node.h, -start_node.g, idx), start_node))
+            
+            while 1:
                 
+                if open_list.empty():
+                    print('The agent or the target is surrounded by obstacles and there is no viable path.')
+                    return   
+                             
+                current_node = open_list.get()[-1]
+                current_node.set_torched()
+                
+                if current_node == target_node:
+                    break
+                
+                for candidate_son in current_node.neighbors:
+                    if candidate_son.is_block == 1 or candidate_son.is_torched == 1:
+                        continue
+                    plt.scatter(candidate_son.x, candidate_son.y, color='orange')
+                    idx += 1
+                    candidate_son_gn_update = current_node.g + current_node.get_distance(current_node)
+                    candidate_son_fn_update  = candidate_son_gn_update  + candidate_son.h
+                    
+                    if (candidate_son.g == None) or candidate_son_gn_update < candidate_son.g:
+                        candidate_son.set_parent(current_node)
+                        
+                        open_list.put(((candidate_son_fn_update, -candidate_son.g, idx), candidate_son))
+                
+            son_node = target_node
 
+            while 1:
+                plt.scatter(son_node.parent.x, son_node.parent.y, color='red')
+                son_node = son_node.parent
+                if son_node.parent == start_node:
+                    break
+
+            for i in range(0, len(all_node)):
+                if all_node[i].is_block == 1:       
+                    plt.scatter(all_node[i].x, all_node[i].y, color='black')    
+                        
+            plt.scatter(x_start, y_start, color='blue')
+            plt.scatter(x_target, y_target, color='blue')  
+                                                        
+            ax=plt.gca()
+            ax.xaxis.set_major_locator(plt.MultipleLocator(1))
+            ax.yaxis.set_major_locator(plt.MultipleLocator(1))       
+            plt.xlim(-0.5, 9.5)    
+            plt.ylim(-0.5, 9.5)   
+            plt.show()                        
+                        
         if data_structure == 'list':
             while 1:
                 min_fn = 100000
@@ -107,16 +150,23 @@ class PathPlanning:
                 
             son_node = target_node
 
-        while 1:
-            plt.scatter(son_node.parent.x, son_node.parent.y, color='red')
-            son_node = son_node.parent
-            if son_node.parent == start_node:
-                break
+            while 1:
+                plt.scatter(son_node.parent.x, son_node.parent.y, color='red')
+                son_node = son_node.parent
+                if son_node.parent == start_node:
+                    break
+                
+            for i in range(0, len(all_node)):
+                if all_node[i].is_block == 1:       
+                    plt.scatter(all_node[i].x, all_node[i].y, color='black')    
                         
-        ax=plt.gca()
-        ax.xaxis.set_major_locator(plt.MultipleLocator(1))
-        ax.yaxis.set_major_locator(plt.MultipleLocator(1))       
-        plt.xlim(-0.5, 9.5)    
-        plt.ylim(-0.5, 9.5)   
-        plt.show()  
+            plt.scatter(x_start, y_start, color='blue')
+            plt.scatter(x_target, y_target, color='blue')  
+                        
+            ax=plt.gca()
+            ax.xaxis.set_major_locator(plt.MultipleLocator(1))
+            ax.yaxis.set_major_locator(plt.MultipleLocator(1))       
+            plt.xlim(-0.5, 9.5)    
+            plt.ylim(-0.5, 9.5)   
+            plt.show()  
         
