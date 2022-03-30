@@ -16,7 +16,8 @@ class TrajectoryPlanning:
 
 if __name__ == '__main__':
     
-    method_selected = 'Astar'
+    #method_selected = 'Astar'
+    method_selected = 'BFS'
     map_selected = 'random_grid_map'
     #map_selected = 'image_map'
     

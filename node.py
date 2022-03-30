@@ -10,6 +10,7 @@ class My_Node:
         self.neighbors = set()
         self.is_torched = 0
         self.is_block = 0
+        self.isin_queue = 0
         
     def set_h(self, target_node):
         self.h = self.get_distance(target_node)            
@@ -32,6 +33,9 @@ class My_Node:
                     
     def set_torched(self):
         self.is_torched = 1
+    
+    def set_isin_queue(self):
+        self.isin_queue = 1
         
 
     
