@@ -4,8 +4,8 @@ class Node:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.h = 0
-        self.g = 0
+        self.h = None
+        self.g = None
         self.parent = None
         self.neighbors = set()
         self.is_torched = 0
@@ -22,9 +22,10 @@ class Node:
                 
     def set_parent(self, parent):
         self.parent = parent
-    
-    def set_g(self, parent):
         self.g = parent.g + self.get_distance(parent)
+        
+    def set_g(self, g):
+        self.g = g
                 
     def get_distance(self, other_node):
         return math.sqrt(math.pow(self.x - other_node.x, 2) + math.pow(self.y - other_node.y, 2))
