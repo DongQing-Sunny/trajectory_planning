@@ -7,7 +7,7 @@ class My_Node:
         self.h = None
         self.g = None
         self.parent = None
-        self.neighbors = set()
+        self.neighbors = []
         self.is_torched = 0
         self.is_block = 0
         self.isin_queue = 0
@@ -19,7 +19,7 @@ class My_Node:
         self.is_block = is_block
             
     def set_neighbor(self, neighbor):
-        self.neighbors.add(neighbor)
+        self.neighbors.append(neighbor)
                 
     def set_parent(self, parent):
         self.parent = parent

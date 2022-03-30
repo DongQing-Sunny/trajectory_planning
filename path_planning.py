@@ -9,7 +9,8 @@ class PathPlanning:
     def do_path_planning(self, map, x_start, y_start, x_target, y_target):
         if self.algo_select == 'BFS':
             return self.BFS_search(map, x_start, y_start, x_target, y_target)
-        
+        if self.algo_select == 'DFS':
+            return self.DFS_search(map, x_start, y_start, x_target, y_target)        
         if self.algo_select == 'Astar':
             return self.astar_search(map, x_start, y_start, x_target, y_target, data_structure='PriorityQueue')
         if self.algo_select == 'RRT':
@@ -81,7 +82,70 @@ class PathPlanning:
         plt.ylim(-0.5, 9.5)   
         plt.show()        
         
+    def DFS_search(self, all_node, x_start, y_start, x_target, y_target):
+    
+        for i in range(0, len(all_node)):
+            if all_node[i].x == x_start and all_node[i].y == y_start:
+                all_node[i].set_block(0)
+                start_node = all_node[i]
+            if all_node[i].x == x_target and all_node[i].y == y_target:
+                all_node[i].set_block(0)
+                target_node = all_node[i]
+
+        for i in range(0, len(all_node)):
+            all_node[i].set_h(target_node)
+        
+        start_node.set_torched()  
+        start_node.set_g(0) 
+        open_list = queue.LifoQueue()   
+        open_list.put(start_node)   
+           
+        while 1:
+            if open_list.empty():
+                print('The agent or the target is surrounded by obstacles and there is no viable path.')
+                return
             
+            current_node = open_list.get()
+            current_node.set_torched()
+            print('current_node:'+str(current_node.x)+','+str(current_node.y))
+            if current_node == target_node:
+                break
+            
+            for candidate_son in current_node.neighbors:
+                plt.scatter(candidate_son.x, candidate_son.y, color='orange')
+                print(str(candidate_son.x)+','+str(candidate_son.y))
+                if candidate_son.is_block == 1 or candidate_son.is_torched == 1 or candidate_son.isin_queue == 1:
+                    continue
+
+                candidate_son.set_parent(current_node)
+                    
+                    
+                if candidate_son.isin_queue == 0:
+                    open_list.put(candidate_son)
+                    candidate_son.isin_queue = 1
+                
+        son_node = target_node
+
+        while 1:
+            plt.scatter(son_node.parent.x, son_node.parent.y, color='red')
+            son_node = son_node.parent
+            if son_node.parent == start_node:
+                break
+
+        for i in range(0, len(all_node)):
+            if all_node[i].is_block == 1:       
+                plt.scatter(all_node[i].x, all_node[i].y, color='black')    
+                    
+        plt.scatter(x_start, y_start, color='blue')
+        plt.scatter(x_target, y_target, color='blue')  
+                                                    
+        ax=plt.gca()
+        ax.xaxis.set_major_locator(plt.MultipleLocator(1))
+        ax.yaxis.set_major_locator(plt.MultipleLocator(1))       
+        plt.xlim(-0.5, 9.5)    
+        plt.ylim(-0.5, 9.5)   
+        plt.show() 
+                    
     def BFS_search(self, all_node, x_start, y_start, x_target, y_target):
 
         for i in range(0, len(all_node)):
