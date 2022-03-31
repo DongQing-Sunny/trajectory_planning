@@ -17,20 +17,21 @@ class TrajectoryPlanning:
 if __name__ == '__main__':
     
     #method_selected = 'Astar'
-    method_selected = 'DFS'
+    #method_selected = 'DFS'
     #method_selected = 'BFS'
-    map_selected = 'random_grid_map'
-    #map_selected = 'image_map'
+    method_selected = 'RRT'
+    #map_selected = 'random_grid_map'
+    map_selected = 'image_map'
     
     x_start = 0
     y_start = 0
-    x_target = 9
-    y_target = 9
+    x_target = 800
+    y_target = 400
     map_max_x = 10
     map_max_y = 10 
     
-    map = My_Map(map_selected, map_max_x, map_max_y)
-    #map = Map(map_selected, image='newmap.png')
+    #map = My_Map(map_selected, map_max_x, map_max_y)
+    map = My_Map(map_selected)
     map = map.create_map()
     
     t = TrajectoryPlanning()

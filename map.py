@@ -14,7 +14,7 @@ class My_Map:
         if self.map_selected == 'random_grid_map':
             return self.random_grid_map(self.max_x, self.max_y)
         elif self.map_selected == 'image_map':
-            return self.image_map(self.image)
+            return self.image_map()
     
     def random_grid_map(self, max_x, max_y):
         all_node = []
@@ -34,11 +34,25 @@ class My_Map:
                     this_node.set_neighbor(that_node)
         return all_node
     
-    def image_map(self, image):
-        img=Image.open(image)
-        img=img.convert('L')
-        img=np.array(img)
+    def image_map(self):
+        x1=89
+        x2=343
+        y1=306
+        y2=459
+        x3=648
+        x4=741
+        y3=234
+        y4=593
+        obstacle = []       
+        obstacle.append(Obstacle(x1, x2, y1, y2))
+        obstacle.append(Obstacle(x3, x4, y3, y4))
         
-        return img
-        
+        return obstacle
+
+class Obstacle:
+    def __init__(self, x1, x2, y1, y2):
+        self.x1 = x1
+        self.x2 = x2
+        self.y1 = y1
+        self.y2 = y2        
     

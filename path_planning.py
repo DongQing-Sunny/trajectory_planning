@@ -2,6 +2,9 @@ import queue
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+from PIL import Image
 
 from node import My_Node
     
@@ -29,9 +32,11 @@ class PathPlanning:
                     free_x_sample = np.delete(x_sample, i)
                     free_y_sample = np.delete(y_sample, i)
                     
-    def RRT_sampling(self, map, x_start, y_start, x_target, y_target, tolerance = 3):  
-
+    def RRT_sampling(self, obstacle, x_start, y_start, x_target, y_target, tolerance = 50):  
+        map = mpimg.imread('newmap.png')   
+        plt.imshow(map)
         start_node = My_Node(x_start, y_start)
+        start_node.set_g(0)
         target_node = My_Node(x_target, y_target)
         selected_node = [start_node]
 
@@ -45,32 +50,58 @@ class PathPlanning:
                 if distance < min_distance:
                     min_distance = distance
                     nearest_node = node
-            x_new = nearest_node.x + 0.3(rand_node.x-nearest_node.x)
-            y_new = nearest_node.y + 0.3(rand_node.y-nearest_node.y)
+            x_new = nearest_node.x + 0.3*(rand_node.x-nearest_node.x)
+            y_new = nearest_node.y + 0.3*(rand_node.y-nearest_node.y)
+            
             new_node = My_Node(x_new, y_new)
-            if not (self.is_node_obstacle_free(new_node) and self.is_edge_obstacle_free(nearest_node, new_node)):
+
+            if not (self.is_node_obstacle_free(new_node, obstacle) and self.is_edge_obstacle_free(nearest_node, new_node, obstacle)):
                 continue
                     
             new_node.set_parent(nearest_node)
             selected_node.append(new_node)
-                
-            if math.sqrt(math.pow(new_node.x - target_node.x,2) + math.pow(new_node.x - target_node.x,2)) < tolerance:
+            plt.scatter(new_node.x, new_node.y, s=2, color='orange')    
+            if math.sqrt(math.pow(new_node.x - target_node.x,2) + math.pow(new_node.y - target_node.y,2)) < tolerance:
                 break
         
         son_node = new_node
+        #print(str(son_node.x)+','+str(son_node.y))
+        x_path = []
+        y_path = []
 
         while 1:
-            plt.plot(son_node.parent.x, son_node.parent.y, color='red')
+            x_path.append(son_node.x)
+            y_path.append(son_node.y)
             son_node = son_node.parent
-            if son_node.parent == start_node:
-                break 
-                   
-                
-    def is_node_obstacle_free(self, new_node):
-        pass
+            if son_node == start_node:
+                break
+            
+        x_path.append(start_node.x)
+        y_path.append(start_node.y)         
+        plt.plot(x_path, y_path, label='Frist line',linewidth=1,color='r',marker='o', markerfacecolor='blue',markersize=4)
+        plt.show()
+                                  
+    def is_node_obstacle_free(self, new_node, obstacle):
+        for i in range(0, len(obstacle)):    
+            if new_node.x >= obstacle[i].x1 and new_node.x <= obstacle[i].x2 and new_node.y >= obstacle[i].y1 and new_node.y <= obstacle[i].y2:
+                return False
+        
+        return True
               
-    def is_edge_obstacle_free(self, nearest_node, new_node):
-        pass       
+    def is_edge_obstacle_free(self, nearest_node, new_node, obstacle):
+        # print('nearest_node:'+str(nearest_node.x)+','+str(nearest_node.y))
+        # print('new_node:'+str(new_node.x)+','+str(new_node.y))
+        for i in range(0, len(obstacle)):
+            if new_node.x-nearest_node.x == 0:
+                if not ((min(new_node.x, nearest_node.x) > obstacle[i].y2) or (max(new_node.x, nearest_node.x) < obstacle[i].y1)):
+                    return False
+            if new_node.x-nearest_node.x != 0:    
+                y_check1 = (obstacle[i].x1-nearest_node.x)/(new_node.x-nearest_node.x)*(new_node.y-nearest_node.y)+nearest_node.y
+                y_check2 = (obstacle[i].x2-nearest_node.x)/(new_node.x-nearest_node.x)*(new_node.y-nearest_node.y)+nearest_node.y
+                if not ((y_check1 > obstacle[i].y2 and y_check2 > obstacle[i].y2) or (y_check1 < obstacle[i].y1 and y_check2 < obstacle[i].y1)):
+                    return False
+        return True
+    
     
     def RRTstar_sampling(self, map, x_start, y_start, x_target, y_target, near_range = 80, tolerance = 3):  
 
@@ -88,8 +119,8 @@ class PathPlanning:
                 if distance < min_distance:
                     min_distance = distance
                     nearest_node = node
-            x_new = nearest_node.x + 0.3(rand_node.x-nearest_node.x)
-            y_new = nearest_node.y + 0.3(rand_node.y-nearest_node.y)
+            x_new = nearest_node.x + 0.3*(rand_node.x-nearest_node.x)
+            y_new = nearest_node.y + 0.3*(rand_node.y-nearest_node.y)
             new_node = My_Node(x_new, y_new)
             if self.is_node_obstacle_free(new_node):
                 continue
@@ -111,15 +142,18 @@ class PathPlanning:
                     min_new_node_gn = new_node_gn
                     new_node.set_g(new_node_gn)
                     new_node.set_parent(node)
-                
+                    
+            selected_node.append(new_node)
+              
             for node in near_list:
                 if not self.is_edge_obstacle_free(node, new_node):
                     continue                
                 node_gn_update = new_node.g + node.get_distance(new_node)
-                if node_gn_update < node.g:
+                if node_gn_update < node.g: # update through new_node
                     node.set_g(node_gn_update)
                     node.set_parent(new_node)
-                    
+                    selected_node.append(node)        
+            
             if math.sqrt(math.pow(new_node.x - target_node.x,2) + math.pow(new_node.x - target_node.x,2)) < tolerance:
                 break            
                 
@@ -128,12 +162,12 @@ class PathPlanning:
                 new_node.set_parent(nearest_node)
                 selected_node.append(new_node)
                 
-            if math.sqrt(math.pow(new_node.x - target_node.x,2) + math.pow(new_node.x - target_node.x,2)) < tolerance:
-                break         
+       
         
     def DFS_search(self, all_node, x_start, y_start, x_target, y_target):
     
         for i in range(0, len(all_node)):
+            all_node[i].set_block(0)
             if all_node[i].x == x_start and all_node[i].y == y_start:
                 all_node[i].set_block(0)
                 start_node = all_node[i]
