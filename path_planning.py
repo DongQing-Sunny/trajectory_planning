@@ -14,7 +14,7 @@ class PathPlanning:
         self.algo_select = algo_select
         return
 
-    def do_path_planning(self, map, x_start, y_start, x_target, y_target):
+    def do_path_planning(self, map, sample_method, x_start, y_start, x_target, y_target):
         if self.algo_select == 'BFS':
             return self.BFS_search(map, x_start, y_start, x_target, y_target)
         if self.algo_select == 'DFS':
@@ -24,7 +24,7 @@ class PathPlanning:
         if self.algo_select == 'RRT':
             return self.RRT_sampling(map, x_start, y_start, x_target, y_target)
         if self.algo_select == 'RRTstar':
-            return self.RRTstar_sampling(map, x_start, y_start, x_target, y_target)
+            return self.RRTstar_sampling(map, sample_method, x_start, y_start, x_target, y_target)
         
     def PRM_sampling(self, map, x_start, y_start, x_target, y_target, sample_size = 100):  
         x_sample = np.random.randint(0, map.shape[0], size=(sample_size))
@@ -107,24 +107,53 @@ class PathPlanning:
         return True
     
     
-    def RRTstar_sampling(self, obstacle, x_start, y_start, x_target, y_target, near_range = 80, tolerance = 100):  
+    def RRTstar_sampling(self, obstacle, sample_method, x_start, y_start, x_target, y_target, near_range = 80, tolerance = 50):  
         map = mpimg.imread('newmap.png')   
         plt.imshow(map)
         start_node = My_Node(x_start, y_start)
         start_node.set_g(0)
         target_node = My_Node(x_target, y_target)
+        Linear_distance = target_node.get_distance(start_node)
+        print(Linear_distance)
+        middle_x = (x_start + x_target)/2
+        middle_y = (y_start + y_target)/2
+        delta_x = x_target-x_start
+        delta_y = y_target-y_start
         tree_node = [start_node]
         target_node_gn = 10000000.0
         loop = 0
         not_update_num = 0
         
         while 1:
+            if sample_method == 'random':    
+                x_sample = np.random.randint(0, map.shape[0])
+                y_sample = np.random.randint(0, map.shape[1])  
+            elif sample_method == 'ellipse_informed':
+                if target_node.g == None or target_node.g > 900:
+                    x_sample = np.random.randint(0, map.shape[0])
+                    y_sample = np.random.randint(0, map.shape[1])  
+                else:
+                    x_circle = -1+2*np.random.random()
+                    y_circle = -1+2*np.random.random() 
+                    if math.sqrt(math.pow(x_circle, 2) + math.pow(y_circle, 2)) >= 1:
+                        continue                
+                    ellipse_a = target_node.g/2
+                    ellipse_c = math.sqrt(math.pow(target_node.x-x_start, 2) + math.pow(target_node.y-y_start, 2))/2
+                    ellipse_b = math.sqrt(math.pow(ellipse_a, 2) - math.pow(ellipse_c, 2))
+                    x_sample_scale = x_circle * ellipse_a
+                    y_sample_scale = y_circle * ellipse_b
+                    x_sample_rotation = x_sample_scale * delta_x/Linear_distance - y_sample_scale * delta_y/Linear_distance
+                    y_sample_rotation = y_sample_scale * delta_x/Linear_distance + x_sample_scale * delta_y/Linear_distance
+                    x_sample = x_sample_rotation + middle_x
+                    y_sample = y_sample_rotation + middle_y
+
+                    
+                    if x_sample < 0 or x_sample > 800 or y_sample < 0 or y_sample > 800:
+                        continue
+            rand_node = My_Node(x_sample, y_sample)
             loop += 1
             if loop % 100 == 1:
                 print('loop:'+str(loop))
-            x_sample = np.random.randint(0, map.shape[0])
-            y_sample = np.random.randint(0, map.shape[1])            
-            rand_node = My_Node(x_sample, y_sample)
             min_distance = 10000
             for node in tree_node:
                 distance = rand_node.get_distance(node)
@@ -148,10 +177,7 @@ class PathPlanning:
                 continue
             
             min_new_node_gn = 10000000
-            #print('near_list_len:'+str(len(near_list)))
             for node in near_list:
-                # print('new_node.g:'+str(new_node.g), 'new_node.x:'+str(new_node.x), 'new_node.y:'+str(new_node.y))
-                # print('node.g:'+str(node.g), 'node.x:'+str(node.x), 'node.y:'+str(node.y))
                 if not self.is_edge_obstacle_free(node, new_node, obstacle):
                     continue
                 
@@ -180,10 +206,8 @@ class PathPlanning:
             updata_son_queue = queue.Queue()
             updata_son_queue.put(new_node)
             
-            num = 0
+
             while not updata_son_queue.empty():
-                num += 1
-                #print(num)
                 current_node = updata_son_queue.get()
                 
                 for son_node in current_node.son:
@@ -192,16 +216,13 @@ class PathPlanning:
                     son_node.set_g(update_g)           
             
             plt.scatter(new_node.x, new_node.y, s=2, color='orange')    
-            #print('new_node.g:'+str(new_node.g), 'new_node.x:'+str(new_node.x), 'new_node.y:'+str(new_node.y))
-            if (math.sqrt(math.pow(new_node.x - target_node.x, 2) + math.pow(new_node.y - target_node.y, 2)) < tolerance):
+            if (math.sqrt(math.pow(new_node.x - x_target, 2) + math.pow(new_node.y - y_target, 2)) < tolerance):
                 if target_node.g == None or target_node.g > new_node.g:
                     target_node.parent = new_node.parent
+                    target_node.x = new_node.x
+                    target_node.y = new_node.y
                     target_node.set_g(new_node.g)
-            
-            #print('target_node.g='+str(target_node.g)) 
-            #if target_node.g != None:
-                #print('gra='+str(math.pow(target_node.g - target_node_gn, 2)))
-            
+                        
             if (target_node.g != None) and (math.pow(target_node.g - target_node_gn, 2) > 0.5):  
                 not_update_num = 0               
             if (target_node.g != None) and (math.pow(target_node.g - target_node_gn, 2) < 0.5):
@@ -213,7 +234,6 @@ class PathPlanning:
                 target_node_gn = target_node.g
             
         son_node = target_node
-        #print(str(son_node.x)+','+str(son_node.y))
         x_path = []
         y_path = []
 
