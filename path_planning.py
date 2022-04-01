@@ -22,7 +22,9 @@ class PathPlanning:
             return self.astar_search(map, x_start, y_start, x_target, y_target, data_structure='PriorityQueue')
         if self.algo_select == 'RRT':
             return self.RRT_sampling(map, x_start, y_start, x_target, y_target)
-    
+        if self.algo_select == 'RRTstar':
+            return self.RRTstar_sampling(map, x_start, y_start, x_target, y_target)
+        
     def PRM_sampling(self, map, x_start, y_start, x_target, y_target, sample_size = 100):  
         x_sample = np.random.randint(0, map.shape[0], size=(sample_size))
         y_sample = np.random.randint(0, map.shape[1], size=(sample_size))
@@ -38,14 +40,14 @@ class PathPlanning:
         start_node = My_Node(x_start, y_start)
         start_node.set_g(0)
         target_node = My_Node(x_target, y_target)
-        selected_node = [start_node]
+        tree_node = [start_node]
 
         while 1:
             x_sample = np.random.randint(0, map.shape[0])
             y_sample = np.random.randint(0, map.shape[1])            
             rand_node = My_Node(x_sample, y_sample)
             min_distance = 10000
-            for node in selected_node:
+            for node in tree_node:
                 distance = rand_node.get_distance(node)
                 if distance < min_distance:
                     min_distance = distance
@@ -59,7 +61,8 @@ class PathPlanning:
                 continue
                     
             new_node.set_parent(nearest_node)
-            selected_node.append(new_node)
+            tree_node.append(new_node)
+            
             plt.scatter(new_node.x, new_node.y, s=2, color='orange')    
             if math.sqrt(math.pow(new_node.x - target_node.x,2) + math.pow(new_node.y - target_node.y,2)) < tolerance:
                 break
@@ -92,29 +95,33 @@ class PathPlanning:
         # print('nearest_node:'+str(nearest_node.x)+','+str(nearest_node.y))
         # print('new_node:'+str(new_node.x)+','+str(new_node.y))
         for i in range(0, len(obstacle)):
-            if new_node.x-nearest_node.x == 0:
-                if not ((min(new_node.x, nearest_node.x) > obstacle[i].y2) or (max(new_node.x, nearest_node.x) < obstacle[i].y1)):
-                    return False
-            if new_node.x-nearest_node.x != 0:    
-                y_check1 = (obstacle[i].x1-nearest_node.x)/(new_node.x-nearest_node.x)*(new_node.y-nearest_node.y)+nearest_node.y
-                y_check2 = (obstacle[i].x2-nearest_node.x)/(new_node.x-nearest_node.x)*(new_node.y-nearest_node.y)+nearest_node.y
-                if not ((y_check1 > obstacle[i].y2 and y_check2 > obstacle[i].y2) or (y_check1 < obstacle[i].y1 and y_check2 < obstacle[i].y1)):
-                    return False
+            if not ((min(new_node.x, nearest_node.x) > obstacle[i].x2) or (max(new_node.x, nearest_node.x) < obstacle[i].x1) or (min(new_node.y, nearest_node.y) > obstacle[i].y2) or (max(new_node.y, nearest_node.y) < obstacle[i].y1)):
+                if new_node.x-nearest_node.x == 0:
+                        return False
+                if new_node.x-nearest_node.x != 0:    
+                    y_check1 = (obstacle[i].x1-nearest_node.x)/(new_node.x-nearest_node.x)*(new_node.y-nearest_node.y)+nearest_node.y
+                    y_check2 = (obstacle[i].x2-nearest_node.x)/(new_node.x-nearest_node.x)*(new_node.y-nearest_node.y)+nearest_node.y
+                    if not ((y_check1 > obstacle[i].y2 and y_check2 > obstacle[i].y2) or (y_check1 < obstacle[i].y1 and y_check2 < obstacle[i].y1)):
+                        return False
         return True
     
     
-    def RRTstar_sampling(self, map, x_start, y_start, x_target, y_target, near_range = 80, tolerance = 3):  
-
+    def RRTstar_sampling(self, obstacle, x_start, y_start, x_target, y_target, near_range = 80, tolerance = 50):  
+        map = mpimg.imread('newmap.png')   
+        plt.imshow(map)
         start_node = My_Node(x_start, y_start)
+        start_node.set_g(0)
         target_node = My_Node(x_target, y_target)
-        selected_node = [start_node]
-
+        tree_node = [start_node]
+        target_node_gn = 10000000
+        
         while 1:
+            
             x_sample = np.random.randint(0, map.shape[0])
             y_sample = np.random.randint(0, map.shape[1])            
             rand_node = My_Node(x_sample, y_sample)
             min_distance = 10000
-            for node in selected_node:
+            for node in tree_node:
                 distance = rand_node.get_distance(node)
                 if distance < min_distance:
                     min_distance = distance
@@ -122,10 +129,12 @@ class PathPlanning:
             x_new = nearest_node.x + 0.3*(rand_node.x-nearest_node.x)
             y_new = nearest_node.y + 0.3*(rand_node.y-nearest_node.y)
             new_node = My_Node(x_new, y_new)
-            if self.is_node_obstacle_free(new_node):
+            
+            if not self.is_node_obstacle_free(new_node, obstacle):
                 continue
+
             near_list = []
-            for node in selected_node:
+            for node in tree_node:
                 distance = new_node.get_distance(node)
                 if distance < near_range:
                     near_list.append(node)
@@ -133,36 +142,74 @@ class PathPlanning:
             if len(near_list) == 0:
                 continue
             
-            min_new_node_gn = 10000
+            min_new_node_gn = 10000000
+            print('near_list_len:'+str(len(near_list)))
             for node in near_list:
-                if not self.is_edge_obstacle_free(node, new_node):
+                print('new_node.g:'+str(new_node.g), 'new_node.x:'+str(new_node.x), 'new_node.y:'+str(new_node.y))
+                print('node.g:'+str(node.g), 'node.x:'+str(node.x), 'node.y:'+str(node.y))
+                if not self.is_edge_obstacle_free(node, new_node, obstacle):
                     continue
+                print(1)
                 new_node_gn = node.g + new_node.get_distance(node)
                 if new_node_gn < min_new_node_gn:
                     min_new_node_gn = new_node_gn
-                    new_node.set_g(new_node_gn)
-                    new_node.set_parent(node)
+                    min_node = node
                     
-            selected_node.append(new_node)
+                new_node.set_parent(min_node)
+                new_node.set_g(min_node)
+                
+                min_node.set_son(new_node)                   
+            tree_node.append(new_node)
               
             for node in near_list:
-                if not self.is_edge_obstacle_free(node, new_node):
-                    continue                
+                if not self.is_edge_obstacle_free(node, new_node, obstacle):
+                    continue   
+                print('new_node:'+str(new_node))             
                 node_gn_update = new_node.g + node.get_distance(new_node)
                 if node_gn_update < node.g: # update through new_node
-                    node.set_g(node_gn_update)
                     node.set_parent(new_node)
-                    selected_node.append(node)        
+                    new_node.set_son(node) 
             
-            if math.sqrt(math.pow(new_node.x - target_node.x,2) + math.pow(new_node.x - target_node.x,2)) < tolerance:
-                break            
+            updata_son_queue = queue.Queue()
+            updata_son_queue.put(new_node)
+            
+            while not updata_son_queue.empty():
+                current_node = updata_son_queue.get()
                 
-                
-                                    
-                new_node.set_parent(nearest_node)
-                selected_node.append(new_node)
-                
-       
+                for son_node in current_node.son:
+                    updata_son_queue.put(son_node)
+                    son_node.set_g(current_node)           
+            
+            plt.scatter(new_node.x, new_node.y, s=2, color='orange')    
+            if (math.sqrt(math.pow(new_node.x - target_node.x, 2) + math.pow(new_node.y - target_node.y, 2)) < tolerance):
+                if target_node.g == None or target_node.g > new_node.g:
+                    target_node.parent = new_node.parent
+                    target_node.set_g(new_node.g)
+            
+            print('target_node.g='+str(target_node.g)) 
+            if target_node.g != None:
+                print('gra='+str(math.pow(target_node.g - target_node_gn,2)))               
+            if (target_node.g != None) and (math.pow(target_node.g - target_node_gn,2) < 50):
+                break
+            
+            target_node_gn = target_node.g
+            
+        son_node = target_node
+        #print(str(son_node.x)+','+str(son_node.y))
+        x_path = []
+        y_path = []
+
+        while 1:
+            x_path.append(son_node.x)
+            y_path.append(son_node.y)
+            son_node = son_node.parent
+            if son_node == start_node:
+                break
+            
+        x_path.append(start_node.x)
+        y_path.append(start_node.y)         
+        plt.plot(x_path, y_path, label='Frist line',linewidth=1,color='r',marker='o', markerfacecolor='blue',markersize=4)
+        plt.show()       
         
     def DFS_search(self, all_node, x_start, y_start, x_target, y_target):
     

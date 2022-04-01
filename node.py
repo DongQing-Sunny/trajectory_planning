@@ -7,6 +7,7 @@ class My_Node:
         self.h = None
         self.g = None
         self.parent = None
+        self.son = []
         self.neighbors = []
         self.is_torched = 0
         self.is_block = 0
@@ -24,6 +25,9 @@ class My_Node:
     def set_parent(self, parent):
         self.parent = parent
         self.g = parent.g + self.get_distance(parent)
+        
+    def set_son(self, son):
+        self.son.append(son)
         
     def set_g(self, g):
         self.g = g
