@@ -26,8 +26,11 @@ class My_Node:
         self.parent = parent
         self.g = parent.g + self.get_distance(parent)
         
-    def set_son(self, son):
+    def append_son(self, son):
         self.son.append(son)
+        
+    def remove_son(self, son):
+        self.son.remove(son)
         
     def set_g(self, g):
         self.g = g

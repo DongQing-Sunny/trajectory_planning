@@ -1,3 +1,4 @@
+from asyncore import loop
 import queue
 import matplotlib.pyplot as plt
 import numpy as np
@@ -106,17 +107,21 @@ class PathPlanning:
         return True
     
     
-    def RRTstar_sampling(self, obstacle, x_start, y_start, x_target, y_target, near_range = 80, tolerance = 50):  
+    def RRTstar_sampling(self, obstacle, x_start, y_start, x_target, y_target, near_range = 80, tolerance = 100):  
         map = mpimg.imread('newmap.png')   
         plt.imshow(map)
         start_node = My_Node(x_start, y_start)
         start_node.set_g(0)
         target_node = My_Node(x_target, y_target)
         tree_node = [start_node]
-        target_node_gn = 10000000
+        target_node_gn = 10000000.0
+        loop = 0
+        not_update_num = 0
         
         while 1:
-            
+            loop += 1
+            if loop % 100 == 1:
+                print('loop:'+str(loop))
             x_sample = np.random.randint(0, map.shape[0])
             y_sample = np.random.randint(0, map.shape[1])            
             rand_node = My_Node(x_sample, y_sample)
@@ -143,56 +148,69 @@ class PathPlanning:
                 continue
             
             min_new_node_gn = 10000000
-            print('near_list_len:'+str(len(near_list)))
+            #print('near_list_len:'+str(len(near_list)))
             for node in near_list:
-                print('new_node.g:'+str(new_node.g), 'new_node.x:'+str(new_node.x), 'new_node.y:'+str(new_node.y))
-                print('node.g:'+str(node.g), 'node.x:'+str(node.x), 'node.y:'+str(node.y))
+                # print('new_node.g:'+str(new_node.g), 'new_node.x:'+str(new_node.x), 'new_node.y:'+str(new_node.y))
+                # print('node.g:'+str(node.g), 'node.x:'+str(node.x), 'node.y:'+str(node.y))
                 if not self.is_edge_obstacle_free(node, new_node, obstacle):
                     continue
-                print(1)
+                
                 new_node_gn = node.g + new_node.get_distance(node)
                 if new_node_gn < min_new_node_gn:
+                     
                     min_new_node_gn = new_node_gn
                     min_node = node
-                    
+                       
                 new_node.set_parent(min_node)
-                new_node.set_g(min_node)
-                
-                min_node.set_son(new_node)                   
+                min_node.append_son(new_node) 
+            
+            if new_node.parent == None:
+                continue                 
             tree_node.append(new_node)
               
             for node in near_list:
                 if not self.is_edge_obstacle_free(node, new_node, obstacle):
-                    continue   
-                print('new_node:'+str(new_node))             
+                    continue             
                 node_gn_update = new_node.g + node.get_distance(new_node)
                 if node_gn_update < node.g: # update through new_node
                     node.set_parent(new_node)
-                    new_node.set_son(node) 
+                    new_node.append_son(node) 
+                    node.parent.remove_son(node)
             
             updata_son_queue = queue.Queue()
             updata_son_queue.put(new_node)
             
+            num = 0
             while not updata_son_queue.empty():
+                num += 1
+                #print(num)
                 current_node = updata_son_queue.get()
                 
                 for son_node in current_node.son:
                     updata_son_queue.put(son_node)
-                    son_node.set_g(current_node)           
+                    update_g = current_node.g + son_node.get_distance(current_node)
+                    son_node.set_g(update_g)           
             
             plt.scatter(new_node.x, new_node.y, s=2, color='orange')    
+            #print('new_node.g:'+str(new_node.g), 'new_node.x:'+str(new_node.x), 'new_node.y:'+str(new_node.y))
             if (math.sqrt(math.pow(new_node.x - target_node.x, 2) + math.pow(new_node.y - target_node.y, 2)) < tolerance):
                 if target_node.g == None or target_node.g > new_node.g:
                     target_node.parent = new_node.parent
                     target_node.set_g(new_node.g)
             
-            print('target_node.g='+str(target_node.g)) 
-            if target_node.g != None:
-                print('gra='+str(math.pow(target_node.g - target_node_gn,2)))               
-            if (target_node.g != None) and (math.pow(target_node.g - target_node_gn,2) < 50):
-                break
+            #print('target_node.g='+str(target_node.g)) 
+            #if target_node.g != None:
+                #print('gra='+str(math.pow(target_node.g - target_node_gn, 2)))
             
-            target_node_gn = target_node.g
+            if (target_node.g != None) and (math.pow(target_node.g - target_node_gn, 2) > 0.5):  
+                not_update_num = 0               
+            if (target_node.g != None) and (math.pow(target_node.g - target_node_gn, 2) < 0.5):
+                not_update_num += 1
+                if not_update_num>1000:
+                    break
+                
+            if target_node.g != None:
+                target_node_gn = target_node.g
             
         son_node = target_node
         #print(str(son_node.x)+','+str(son_node.y))
