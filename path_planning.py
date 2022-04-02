@@ -54,8 +54,7 @@ class PathPlanning:
                     min_distance = distance
                     nearest_node = node
             x_new = nearest_node.x + 0.3*(rand_node.x-nearest_node.x)
-            y_new = nearest_node.y + 0.3*(rand_node.y-nearest_node.y)
-            
+            y_new = nearest_node.y + 0.3*(rand_node.y-nearest_node.y)  
             new_node = My_Node(x_new, y_new)
 
             if not (self.is_node_obstacle_free(new_node, obstacle) and self.is_edge_obstacle_free(nearest_node, new_node, obstacle)):
@@ -69,7 +68,6 @@ class PathPlanning:
                 break
         
         son_node = new_node
-        #print(str(son_node.x)+','+str(son_node.y))
         x_path = []
         y_path = []
 
@@ -93,8 +91,6 @@ class PathPlanning:
         return True
               
     def is_edge_obstacle_free(self, nearest_node, new_node, obstacle):
-        # print('nearest_node:'+str(nearest_node.x)+','+str(nearest_node.y))
-        # print('new_node:'+str(new_node.x)+','+str(new_node.y))
         for i in range(0, len(obstacle)):
             if not ((min(new_node.x, nearest_node.x) > obstacle[i].x2) or (max(new_node.x, nearest_node.x) < obstacle[i].x1) or (min(new_node.y, nearest_node.y) > obstacle[i].y2) or (max(new_node.y, nearest_node.y) < obstacle[i].y1)):
                 if new_node.x-nearest_node.x == 0:
@@ -146,14 +142,15 @@ class PathPlanning:
                     y_sample_rotation = y_sample_scale * delta_x/Linear_distance + x_sample_scale * delta_y/Linear_distance
                     x_sample = x_sample_rotation + middle_x
                     y_sample = y_sample_rotation + middle_y
-
-                    
+    
                     if x_sample < 0 or x_sample > 800 or y_sample < 0 or y_sample > 800:
                         continue
             rand_node = My_Node(x_sample, y_sample)
+            
             loop += 1
             if loop % 100 == 1:
                 print('loop:'+str(loop))
+                
             min_distance = 10000
             for node in tree_node:
                 distance = rand_node.get_distance(node)
@@ -163,7 +160,6 @@ class PathPlanning:
             x_new = nearest_node.x + 0.3*(rand_node.x-nearest_node.x)
             y_new = nearest_node.y + 0.3*(rand_node.y-nearest_node.y)
             new_node = My_Node(x_new, y_new)
-            
             if not self.is_node_obstacle_free(new_node, obstacle):
                 continue
 
@@ -172,7 +168,6 @@ class PathPlanning:
                 distance = new_node.get_distance(node)
                 if distance < near_range:
                     near_list.append(node)
-            
             if len(near_list) == 0:
                 continue
             
@@ -180,16 +175,12 @@ class PathPlanning:
             for node in near_list:
                 if not self.is_edge_obstacle_free(node, new_node, obstacle):
                     continue
-                
                 new_node_gn = node.g + new_node.get_distance(node)
-                if new_node_gn < min_new_node_gn:
-                     
+                if new_node_gn < min_new_node_gn: 
                     min_new_node_gn = new_node_gn
-                    min_node = node
-                       
+                    min_node = node       
                 new_node.set_parent(min_node)
                 min_node.append_son(new_node) 
-            
             if new_node.parent == None:
                 continue                 
             tree_node.append(new_node)
@@ -204,12 +195,9 @@ class PathPlanning:
                     node.parent.remove_son(node)
             
             updata_son_queue = queue.Queue()
-            updata_son_queue.put(new_node)
-            
-
+            updata_son_queue.put(new_node) 
             while not updata_son_queue.empty():
                 current_node = updata_son_queue.get()
-                
                 for son_node in current_node.son:
                     updata_son_queue.put(son_node)
                     update_g = current_node.g + son_node.get_distance(current_node)
@@ -228,8 +216,7 @@ class PathPlanning:
             if (target_node.g != None) and (math.pow(target_node.g - target_node_gn, 2) < 0.5):
                 not_update_num += 1
                 if not_update_num>1000:
-                    break
-                
+                    break    
             if target_node.g != None:
                 target_node_gn = target_node.g
             
@@ -250,7 +237,7 @@ class PathPlanning:
         plt.show()       
         
     def DFS_search(self, all_node, x_start, y_start, x_target, y_target):
-    
+
         for i in range(0, len(all_node)):
             all_node[i].set_block(0)
             if all_node[i].x == x_start and all_node[i].y == y_start:
@@ -275,22 +262,23 @@ class PathPlanning:
             
             current_node = open_list.get()
             current_node.set_torched()
-            print('current_node:'+str(current_node.x)+','+str(current_node.y))
+            print('current_node:'+str(current_node.x)+','+str
+                  (current_node.y))
             if current_node == target_node:
                 break
             
             for candidate_son in current_node.neighbors:
                 plt.scatter(candidate_son.x, candidate_son.y, color='orange')
                 print(str(candidate_son.x)+','+str(candidate_son.y))
-                if candidate_son.is_block == 1 or candidate_son.is_torched == 1 or candidate_son.isin_queue == 1:
+                if candidate_son.is_block == 1 or candidate_son.is_torched == 1:
                     continue
 
                 candidate_son.set_parent(current_node)
-                    
-                    
-                if candidate_son.isin_queue == 0:
-                    open_list.put(candidate_son)
-                    candidate_son.isin_queue = 1
+                open_list.put(candidate_son)
+                       
+                # if candidate_son.isin_queue == 0:
+                #     open_list.put(candidate_son)
+                #     candidate_son.isin_queue = 1
                 
         son_node = target_node
 

@@ -22,8 +22,8 @@ if __name__ == '__main__':
     #method_selected = 'RRT'
     method_selected = 'RRTstar'
     
-    sample_method = 'random'
-    #sample_method = 'ellipse_informed'
+    #sample_method = 'random'
+    sample_method = 'ellipse_informed'
     
     #map_selected = 'random_grid_map'
     map_selected = 'image_map'
