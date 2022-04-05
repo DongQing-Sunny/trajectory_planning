@@ -29,7 +29,7 @@ if __name__ == '__main__':
     map_selected = 'image_map'
     
     x_start = 100
-    y_start = 200
+    y_start = 100
     x_target = 700
     y_target = 700
     map_max_x = 10
