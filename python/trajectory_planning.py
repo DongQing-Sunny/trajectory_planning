@@ -1,6 +1,5 @@
 from path_planning import PathPlanning
 from map import My_Map
-import sympy
 
     
 class TrajectoryPlanning:
@@ -23,15 +22,15 @@ if __name__ == '__main__':
     #method_selected = 'RRT'
     method_selected = 'RRTstar'
     
-    #sample_method = 'random'
-    sample_method = 'ellipse_informed'
+    sample_method = 'random'
+    #sample_method = 'ellipse_informed'
     
     #map_selected = 'random_grid_map'
     map_selected = 'image_map'
     
     x_start = 100
     y_start = 100
-    x_target = 700
+    x_target = 400
     y_target = 700
     map_max_x = 10
     map_max_y = 10 
