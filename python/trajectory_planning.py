@@ -1,5 +1,6 @@
 from path_planning import PathPlanning
 from map import My_Map
+import sympy
 
     
 class TrajectoryPlanning:
